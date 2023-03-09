@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::to_value;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
+use web_sys::HtmlInputElement;
 use yew::prelude::*;
+use yew::{html, Callback, Html};
 
 #[wasm_bindgen]
 extern "C" {
@@ -22,9 +24,9 @@ struct GreetArgs<'a> {
 pub fn app() -> Html {
     let greet_input_ref = use_node_ref();
 
-    let name = use_state(|| String::new());
+    let name = use_state(String::new);
 
-    let greet_msg = use_state(|| String::new());
+    let greet_msg = use_state(String::new);
     {
         let greet_msg = greet_msg.clone();
         let name = name.clone();
@@ -37,15 +39,13 @@ pub fn app() -> Html {
                     }
 
                     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-                    let new_msg = invoke(
-                        "greet",
-                        to_value(&GreetArgs { name: &*name }).unwrap(),
-                    )
-                    .await;
+                    let new_msg =
+                        invoke("greet", to_value(&GreetArgs { name: &name }).unwrap()).await;
                     log(&new_msg.as_string().unwrap());
                     greet_msg.set(new_msg.as_string().unwrap());
                 });
 
+                // runs when component unmounts
                 || {}
             },
             name2,
@@ -53,10 +53,10 @@ pub fn app() -> Html {
     }
 
     let greet = {
-        let name = name.clone();
+        let name = name;
         let greet_input_ref = greet_input_ref.clone();
         Callback::from(move |_| {
-            name.set(greet_input_ref.cast::<web_sys::HtmlInputElement>().unwrap().value());
+            name.set(greet_input_ref.cast::<HtmlInputElement>().unwrap().value());
         })
     };
 
